@@ -1,0 +1,16 @@
+//
+// Created by Christopher Silva on 10/26/25.
+//
+
+#ifndef TREE_H
+#define TREE_H
+
+
+
+class tree {
+
+};
+
+
+
+#endif //TREE_H
