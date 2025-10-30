@@ -16,7 +16,7 @@ export async function retrieveData(_, res){ //doesnt need req only need res
         const get20 = 20 // how many requests we make at a time
         let pageNumber = 1
         //fs.writeFileSync('crimeData.json', '') //create file and if file already created empty it
-        for(let i = 0; i < 10; i++){
+        for(let i = 0; i < 1; i++){
             let chunk = []
             for(let k = 1; k < 200; k+=get20){/*
             each page of the data set has 50 values so we will go 2010pages * 50rows per page
