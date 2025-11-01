@@ -10,25 +10,120 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 
-export async function retrieveData(_, res){ //doesnt need req only need res
+export async function retrieveData(_, res){
     try{
 
         const get20 = 20 // how many requests we make at a time
         let pageNumber = 1
-        //fs.writeFileSync('crimeData.json', '') //create file and if file already created empty it
-        for(let i = 0; i < 1; i++){
+        for(let i = 0; i < 10; i++){
+            console.log(`trying page ${i}`)
             let chunk = []
-            for(let k = 1; k < 200; k+=get20){/*
-            each page of the data set has 50 values so we will go 2010pages * 50rows per page
-             just to get a little more
-             */
+            for(let k = 1; k < 201; k+=get20){
 
                 let requests = [] // we will house all fetch requests in this array
 
-                for (let j = k; j < k + get20 && j < 200; j++) {
+                for (let j = k; j < k + get20 && j < 201; j++) {
                     requests.push(fetch(process.env.DATA_API +
                         "?pageNumber=" + pageNumber +
                         "&pageSize=50" +
+                        "&orderingSpecifier=discard" +
+                        "&app_token=" + process.env.SECRET_TOKEN))
+                    pageNumber++;
+                }
+
+               //DATA_API and SECRET_TOKEN are hidden in the .env file.
+
+                /*
+                we will do 20 requests at a time and await for the 20 to finish
+                This is faster than doing one requests at a time because instead of waiting one by one
+                we only wait for 20 than do next 20
+                we have it set to 20 for now so we dont get blocked by the api
+                i personally am to afraid to go higher than that for now
+                 */
+
+                const jsonArr = await Promise.all(response.map(r => r.json()))
+
+
+
+                //turn all the response into json so we can put them into file
+
+
+
+                const filter = jsonArr.flatMap(item =>
+                    Array.isArray(item) ?
+                        item.map(d => ({
+                            area: d.area,
+                            crm_cd: d.crm_cd,
+                            area_name: d.area_name,
+                            dr_no : d.dr_no
+                        }))
+                        : [])
+
+                /*
+                this will filter the data so that we only have certain values. that are requested
+                 */
+
+
+                chunk.push(...filter)
+                /*
+                this chunk we just aquired after all that will now be inputted into the file so we
+                dont write a bajillion lines at once
+                 */
+                }
+            fs.writeFileSync(`crimeData_${i}.json`, JSON.stringify(chunk))
+            console.log("input crimeData: ", i)
+        }
+
+
+        console.log("saved dataset.json");
+        res.status(200).json({msg: "got the data!"})
+    } catch(error){
+        console.error("Couldnt get crime data", error)
+        res.status(400).json({msg: "failed to retrieve data"})
+    }
+}
+
+export function runCpp(req, res){
+    const type = String(req.query.type || "DISPLAY").slice(0, 20); //Read type, default display if not
+    const region = String(req.query.region || "UNKNOWN").slice(0, 20); //Read region, default uknown all if not
+    const binPath = path.join(__dirname, "bin", process.platform === 'win32' ? 'crime.exe' : 'crime'); //Executable path
+    //Execute C++ binary with args
+    if (!fs.existsSync(binPath)) {
+        return res.status(500).send("C++ binary not found.");
+    }
+
+    const args = [type, region];
+    // safety: set timeout and maxBuffer to avoid hangs / excessive memory
+    const execOptions = { timeout: 10000, maxBuffer: 10 * 1024 * 1024 };
+    execFile(binPath, args, execOptions, (error, stdout, stderr) => {
+        if (error) {
+            console.error("Error executing C++ binary:", error, stderr);
+            if (error.killed) return res.status(504).send("C++ process timed out.");
+            return res.status(500).send("Error executing C++ binary.");
+        }
+        // Send stdout as response
+        return res.status(200).send(stdout || "No output from C++ program.");
+    });
+}
+
+
+//just for testing retrieveData. run by going to localhost:PORT/test. same as other just only does one .json file with less data
+export async function retrieveDataTest(_, res){ //doesnt need req only need res
+    try{
+
+        const get20 = 20 // how many requests we make at a time
+        let pageNumber = 1
+        for(let i = 0; i < 1; i++){
+            console.log(`trying page ${i}`)
+            let chunk = []
+            for(let k = 1; k < 201; k+=get20){
+
+                let requests = [] // we will house all fetch requests in this array
+
+                for (let j = k; j < k + get20 && j < 201; j++) {
+                    requests.push(fetch(process.env.DATA_API +
+                        "?pageNumber=" + pageNumber +
+                        "&pageSize=20" +
                         "&orderingSpecifier=discard" +
                         "&app_token=" + process.env.SECRET_TOKEN))
                     pageNumber++;
@@ -52,6 +147,7 @@ export async function retrieveData(_, res){ //doesnt need req only need res
                 const jsonArr = await Promise.all(response.map(r => r.json()))
 
 
+
                 //turn all the response into json so we can put them into file
 
                 /*
@@ -68,7 +164,8 @@ export async function retrieveData(_, res){ //doesnt need req only need res
                         item.map(d => ({
                             area: d.area,
                             crm_cd: d.crm_cd,
-                            area_name: d.area_name
+                            area_name: d.area_name,
+                            dr_no : d.dr_no
                         }))
                         : [])
 
@@ -83,7 +180,7 @@ export async function retrieveData(_, res){ //doesnt need req only need res
 
 
                 //const chunk = JSON.stringify(filter)
-                chunk.push(JSON.stringify(filter))
+                chunk.push(...filter)
                 /*
                 this chunk we just aquired after all that will now be inputted into the file so we
                 dont write a bajillion lines at once
@@ -93,14 +190,10 @@ export async function retrieveData(_, res){ //doesnt need req only need res
 
                 //just for us to see what page were on
                 //
-                }
+            }
             fs.writeFileSync(`crimeData_${i}.json`, JSON.stringify(chunk))
             console.log("input crimeData: ", i)
         }
-
-
-        fs.writeFileSync("crimeData.json", JSON.stringify(fullData));
-        //this writes a file called crimeData.json (which will be ignored when pushed to git)
 
         console.log("saved dataset.json");
         res.status(200).json({msg: "got the data!"})
@@ -108,29 +201,5 @@ export async function retrieveData(_, res){ //doesnt need req only need res
     } catch(error){
         console.error("Couldnt get crime data", error)
         res.status(400).json({msg: "failed to retrieve data"})
-        //something went wrong in retrieving data, from what ive seen biggest reason is
-        //too big of a string -c
     }
-}
-export function runCpp(req, res){
-    const type = String(req.query.type || "DISPLAY").slice(0, 20); //Read type, default display if not
-    const region = String(req.query.region || "UNKNOWN").slice(0, 20); //Read region, default uknown all if not
-    const binPath = path.join(__dirname, "bin", process.platform === 'win32' ? 'crime.exe' : 'crime'); //Executable path
-    //Execute C++ binary with args
-    if (!fs.existsSync(binPath)) {
-        return res.status(500).send("C++ binary not found.");
-    }
-
-    const args = [type, region];
-    // safety: set timeout and maxBuffer to avoid hangs / excessive memory
-    const execOptions = { timeout: 10000, maxBuffer: 10 * 1024 * 1024 };
-    execFile(binPath, args, execOptions, (error, stdout, stderr) => {
-        if (error) {
-            console.error("Error executing C++ binary:", error, stderr);
-            if (error.killed) return res.status(504).send("C++ process timed out.");
-            return res.status(500).send("Error executing C++ binary.");
-        }
-        // Send stdout as response
-        return res.status(200).send(stdout || "No output from C++ program.");
-    });
 }

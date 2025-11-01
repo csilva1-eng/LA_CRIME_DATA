@@ -1,5 +1,5 @@
 import express from 'express'
-import {retrieveData} from './controls.js'
+import {retrieveData, retrieveDataTest} from './controls.js'
 
 const router = express.Router()
 //express router so we can organize our controls here. In the future there will probably be a get request for when bfs and dfs are clicked
@@ -7,9 +7,6 @@ const router = express.Router()
 
 
 router.get('/', retrieveData)
-/*
-This is just how it is for now but when i tried retrieving 100k+ data elements it took a very very long time.
-since our data will be static we should decide on what portions of the data we want so we can have a final crimeData.json file
- */
+router.get('/test', retrieveDataTest)
 
 export default router

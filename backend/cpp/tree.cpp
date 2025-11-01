@@ -2,17 +2,8 @@
 // Created by Christopher Silva on 10/26/25.
 //
 #include "tree.h"
-#include <bits/stdc++.h>
-//https://gist.github.com/Einstrasse/ac0fe7d7450621a39364ed3b05cacd11 use this and put it into that directory
-#include "json.hpp" // include nlohmann json library
-using json = nlohmann::json; //Just for json abbreviation
-using namespace std;
+namespace fs = std::filesystem;
 
-/*
-i want the root to have a growing vector of other nodes
-no other nodes will have this vector
-
- */
 
 /*
  *bfs alg is self explanatory
@@ -32,69 +23,78 @@ no other nodes will have this vector
  *
  *greater string is for us to find difference between dr numbers for organization in tree. the data set gives dr num as a
  *string for whatever reason so i tried my best to do the fastest way to find which is greater
+ *
+ *
+ *nov 1
+ *added print all subTrees
+ *grab jsonData so it can now see the .json files and parse them using json.hpp
+ *getRoots for really no reason other than testing
+ *201 is the special number for controls.js to get exactly 100k vals. assuming ur doing 10 files
+ *
  */
 
-struct Node {
-    unordered_map<std::string, Node*> children;
-    //int count; //For records
-    Node* right = nullptr;
-    Node* left = nullptr;
-    string dr_num;
-    string val;
-    Node(string& dr_num, string& val) {
+
+    Node::Node(string& dr_num, string& val) {
         this->dr_num = dr_num;
         this->val = val;
         count = 0;
         right = nullptr;
         left = nullptr;
     } 
-};
 
-class CrimeTree {
-    map<string, Node*> roots;
 
-public:
-//    Node* root = new Node("root");
 
-    void insertRecord(const json &record) {
-        string area = record.value("area_name", "Unknown");
-        string type = record.value("crime_type", "Unknown");
-        string year = record.value("year", "Unknown");
 
-        Node* areaNode = get(root, area);
-        Node* typeNode = get(areaNode, type);
-        Node* yearNode = get(typeNode, year);
-
-        //Should incrememtn count at each level
-        yearNode->count += 1;
-        typeNode->count += 1;
-        areaNode->count += 1;
+    map<string, Node*> CrimeTree::getRoots() {
+        return roots;
     }
 
-    void insertNode(string dr_num, string val){
+    void CrimeTree::grabJsonData() {
+        fs::path cppFolder = fs::path(__FILE__).parent_path();
+        for (int i = 0; i < 10; i++) {
+            ostringstream oss;
+
+            oss << "../../crimeData_" << i << ".json";
+            ifstream ifs(oss.str());
+            if (!ifs.is_open()) {
+                cerr << "couldnt open " + oss.str() << endl;
+                return;
+            }
+
+            json data = json::parse(ifs);
+            for (int i = 0; i < data.size(); i++) {
+                string dr_num = data[i]["dr_no"];
+                string val = data[i]["area_name"];
+                insertNode(dr_num, val);
+            }
+            ifs.close();
+        }
+    }
+
+    void CrimeTree::insertNode(string dr_num, string val){
         if (roots.find(val) == roots.end()) {
             roots[val] = new Node(dr_num, val);
             return;
         }
         Node* node = new Node(dr_num, val);
         roots[val] = insertInSubtree(node, roots[val]);
+        roots[val]->count++;
       }
 
-    bool greaterString(const string &str1, const string &str2) {
+    bool CrimeTree::greaterString(const string &str1, const string &str2) {
         for (int i =0 ; i < str1.size(); i++) {
             if (str1[i] - '0' > str2[i] - '0') return true;
+            if (str2[i] - '0' > str1[i] - '0') return false;
         }
         return false;
     }
 
-    Node* insertInSubtree(Node* node, Node* root) {
+    Node* CrimeTree::insertInSubtree(Node* node, Node* root) {
         //LNR recursive form of insert
-        if (!root) return nullptr;
-
+        if (!root) return node;
         if (greaterString(root->dr_num, node->dr_num)) { //change these to functions
             root->left = insertInSubtree(node, root->left);
-        }
-        if (greaterString(node->dr_num, root->dr_num)) {
+        }else{
             root->right = insertInSubtree(node, root->right);
         }
 
@@ -102,7 +102,7 @@ public:
     }
 
     //now implement bfs and dfs
-    void bfsAlg() {
+    void CrimeTree::bfsAlg() {
         queue<Node*> q;
         auto itr = roots.begin();
         while (itr != roots.end()) {
@@ -132,17 +132,22 @@ public:
 
     }
 
+    void CrimeTree::inorderTraversal(Node* root) {
+        //LNR
+        if (root == nullptr) return;
 
-    // Node* get(Node* parent, const string& childName) {
-    //     if (parent->children.count(childName)) return parent->children[childName];
-    //     Node* node = new Node(childName);
-    //     parent->children[childName] = node;
-    //     return node;
-    // }
-};
-int main(){
-    CrimeTree tree;
+        inorderTraversal(root->left);
+        cout << root->dr_num << " " << root->val << endl;
+        inorderTraversal(root->right);
 
-    ifstream ifs;
-    return 0;
-}
+    }
+
+    void CrimeTree::printAllSubtrees() {
+        auto itr = roots.begin();
+        while (itr != roots.end()) {
+            cout << itr->second->count << endl;
+            inorderTraversal(itr->second);
+            itr++;
+        }
+    }
+
