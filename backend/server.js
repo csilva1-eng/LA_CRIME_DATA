@@ -22,5 +22,5 @@ app.get('/run-cpp', runCpp);
 
 app.use('/', router) //just using this for now so when you open localhost:3001 itll try and create the data file
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
