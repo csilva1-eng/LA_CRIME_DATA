@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import './App.css'
-import "@fontsource/ibm-plex-sans";
+import BarGraph from './BarGraph/BarGraph';
+//import "@fontsource/ibm-plex-sans";
 
 
 function App() {
@@ -18,6 +19,8 @@ function App() {
   const [region, setRegion] = useState("N Hollywood");
   const [xAxis, setXAxis] = useState("AREA NAME");
   const [xAxisData, setXAxisData] = useState([]);
+  const [xAxisLoading, setXAxisLoading] = useState(false);
+  const [xAxisError, setXAxisError] = useState(null);
 
   const APP_TOKEN = "JZStIfxvIBLxyqzrOs41hWlyx" // api token from making an account with City of Los Angeles
   const api = `https://data.lacity.org/api/v3/views/2nrs-mtv8/query.json/`; // api using SODA3
@@ -28,7 +31,7 @@ function App() {
 
   const search = (type) => {
     // Make HTTP request to backend
-    fetch(`http://localhost:3001/run-cpp?type=${type}&region=${region}`)
+    fetch(`/api/run-cpp?type=${type}&region=${region}`)
       .then(res => res.text()) // Plain text response
       .then(console.log)
       .then(setCppOutput)   // Directly set state
@@ -36,12 +39,18 @@ function App() {
   }
 
   const fetchXAxisData = async (selectedAxis) => {
+    setXAxisLoading(true);
+    setXAxisError(null);
     try {
-      const response = await axios.get("http://localhost:3001/retrieve-xaxis-data", { params: { Xaxis: selectedAxis } });
-      setXAxisData(response.data);
+      const response = await axios.get(`/api/retrieve-xaxis-data`, { params: { Xaxis: selectedAxis } });
+      setXAxisData(response.data || []);
       console.log(response.data);
     } catch (error) {
       console.error("Error fetching X-axis data:", error);
+      setXAxisError(error.message || String(error));
+      setXAxisData([]);
+    } finally {
+      setXAxisLoading(false);
     }
   }
 
@@ -108,8 +117,13 @@ function App() {
 
 
         <div className='map'>
-          
+          {xAxisLoading && <div>Loading chart…</div>}
+          {xAxisError && <div style={{ color: 'red' }}>Error loading data: {xAxisError}</div>}
+          {!xAxisLoading && !xAxisError && (
+            <BarGraph groupedData={xAxisData} x_axis_label={xAxis} y_axis_label={"Count"} datasetLabel={`Counts by ${xAxis}`} />
+          )}
         </div>
+
 
         <div className='controls'>
         <label> Longitude
@@ -143,11 +157,11 @@ function App() {
         <div className='x-axis-select'>
           <label> Select X-Axis:
             <select value={xAxis} onChange={(e) => { setXAxis(e.target.value); fetchXAxisData(e.target.value); }}>
-              <option value="area_name">Area</option>
-              <option value="crm_cd_desc">Crime Code</option>
-              <option value="vict_sex">Victim Sex</option>
-              <option value="vict_age">Victim Age</option>
-              <option value="premis_desc">Premise Description</option>
+              <option value="AREA NAME">Area</option>
+              <option value="Crm Cd Desc">Crime Code</option>
+              <option value="Vict Sex">Victim Sex</option>
+              <option value="Vict Age">Victim Age</option>
+              <option value="Premis Desc">Premise Description</option>
             </select>
           </label>
         </div>

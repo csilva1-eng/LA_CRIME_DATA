@@ -1,5 +1,4 @@
-/* eslint-env node */
-import { execFile, exec } from 'child_process'
+import { execFile } from 'child_process'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
@@ -15,8 +14,7 @@ const __dirname = path.dirname(__filename);
 
 export async function retrieveData(req, res){
     try{
-        //http://localhost:3001/api/test?xAxis=(wtv u want)
-        // const xAxis = req.query.Xaxis || "AREA"; //default to area_name if not provided
+        const xAxis = req.query.Xaxis || "AREA"; //default to area_name if not provided
         const get20 = 20 // how many requests we make at a time
         let pageNumber = 1
         for(let i = 0; i < 10; i++){
@@ -74,14 +72,11 @@ export async function retrieveData(req, res){
                 }
             fs.writeFileSync(`crimeData_${i}.json`, JSON.stringify(chunk))
             console.log("input crimeData: ", i)
-
-            //allData.push(...chunk); //added
+            allData.push(...chunk); //added
         }
-
-
+        
         console.log("saved dataset.json");
-        const result = retrieveXAxisData(req.query.xAxis)
-        res.status(200).json(result)
+        res.status(200).json({msg: "got the data!"})
     } catch(error){
         console.error("Couldnt get crime data", error)
         res.status(400).json({msg: "failed to retrieve data"})
@@ -89,34 +84,26 @@ export async function retrieveData(req, res){
 }
 
 export function runCpp(req, res){
-    try{
-        const filesToCompile = "tree.cpp crime.cpp"
-        const exeName = process.platorm == "win32" ? "P2-DSA_LACrimeData.exe" : "P2-DSA-LACrimeData"
-
-
-        const type = String(req.query.type || "DISPLAY").slice(0, 20); //Read type, default display if not
-        const region = String(req.query.region || "UNKNOWN").slice(0, 20); //Read region, default uknown all if not
-        const binPath = path.join(__dirname, "cpp", "build", process.platform === 'win32' ? 'P2-DSA-LACrimeData.exe' : 'P2-DSA-LACrimeData'); //Executable path
-        //Execute C++ binary with args
-        if (!fs.existsSync(binPath)) {
-            return res.status(500).send("C++ binary not found.");
-        }
-
-        const args = [type, region];
-        // safety: set timeout and maxBuffer to avoid hangs / excessive memory
-        const execOptions = {timeout: 10000, maxBuffer: 10 * 1024 * 1024};
-        execFile(binPath, args, execOptions, (error, stdout, stderr) => {
-            if (error) {
-                console.error("Error executing C++ binary:", error, stderr);
-                if (error.killed) return res.status(504).send("C++ process timed out.");
-                return res.status(500).send("Error executing C++ binary.");
-            }
-            // Send stdout as response
-            return res.status(200).send(stdout || "No output from C++ program.");
-        });
-    } catch(error){
-        console.error("Couldnt run the program :( ", error)
+    const type = String(req.query.type || "DISPLAY").slice(0, 20); //Read type, default display if not
+    const region = String(req.query.region || "UNKNOWN").slice(0, 20); //Read region, default uknown all if not
+    const binPath = path.join(__dirname, "bin", process.platform === 'win32' ? 'crime.exe' : 'crime'); //Executable path
+    //Execute C++ binary with args
+    if (!fs.existsSync(binPath)) {
+        return res.status(500).send("C++ binary not found.");
     }
+
+    const args = [type, region];
+    // safety: set timeout and maxBuffer to avoid hangs / excessive memory
+    const execOptions = { timeout: 10000, maxBuffer: 10 * 1024 * 1024 };
+    execFile(binPath, args, execOptions, (error, stdout, stderr) => {
+        if (error) {
+            console.error("Error executing C++ binary:", error, stderr);
+            if (error.killed) return res.status(504).send("C++ process timed out.");
+            return res.status(500).send("Error executing C++ binary.");
+        }
+        // Send stdout as response
+        return res.status(200).send(stdout || "No output from C++ program.");
+    });
 }
 
 
@@ -129,11 +116,11 @@ export async function retrieveDataTest(req, res){ //doesnt need req only need re
         for(let i = 0; i < 1; i++){
             console.log(`trying page ${i}`)
             let chunk = []
-            for(let k = 1; k < 41; k+=get20){
+            for(let k = 1; k < 201; k+=get20){
 
                 let requests = [] // we will house all fetch requests in this array
 
-                for (let j = k; j < k + get20 && j < 41; j++) {
+                for (let j = k; j < k + get20 && j < 201; j++) {
                     requests.push(fetch(process.env.DATA_API +
                         "?pageNumber=" + pageNumber +
                         "&pageSize=20" +
@@ -176,7 +163,7 @@ export async function retrieveDataTest(req, res){ //doesnt need req only need re
                     Array.isArray(item) ?
                         item.map(d => ({
                             [req.query.xAxis]: d[req.query.xAxis],
-                            dr_no: d.dr_no
+                            dr_no: dr_no
                         }))
                         : [])
 
@@ -214,11 +201,17 @@ export async function retrieveDataTest(req, res){ //doesnt need req only need re
         res.status(400).json({msg: "failed to retrieve data"})
     }
 }
-export function retrieveXAxisData(xAxisReq){
+export async function retrieveXAxisData(req, res){ 
     try{
-        const xAxis =  xAxisReq || "AREA NAME"; //default to area_name if not provided
+        const xAxis = req.query.Xaxis || "AREA NAME"; //default to area_name if not provided
         //let allData = []; was how i had it, this is to test
-        const allData = [];
+        const allData = [
+        { "AREA NAME": "N Hollywood", "Crm Cd Desc": "THEFT", "Vict Sex": "M", "Vict Age": 30 },
+        { "AREA NAME": "N Hollywood", "Crm Cd Desc": "ASSAULT", "Vict Sex": "F", "Vict Age": 25 },
+        { "AREA NAME": "Van Nuys", "Crm Cd Desc": "THEFT", "Vict Sex": "M", "Vict Age": 40 },
+        { "AREA NAME": "Van Nuys", "Crm Cd Desc": "THEFT", "Vict Sex": "F", "Vict Age": 22 },
+        { "AREA NAME": "Wilshire", "Crm Cd Desc": "BURGLARY", "Vict Sex": "M", "Vict Age": 35 },
+        ];
         //read
         for (let i = 0; i < 10; i++) {
             try {
@@ -243,10 +236,9 @@ export function retrieveXAxisData(xAxisReq){
             value: grouped[key]
         }));
         console.log("grouped data ready");
-        // res.status(200).json(result);
-        return result
+        res.status(200).json(result);
     } catch (error) {
         console.error("Error processing data:", error);
-        // res.status(500).json({ msg: "Error processing data" });
+        res.status(500).json({ msg: "Error processing data" });
     }
 }
