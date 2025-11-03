@@ -19,6 +19,7 @@ ChartJS.register(
   Legend
 );
 
+<<<<<<< HEAD
 const BarGraph = ({ x_axis, y_axis, x_axis_label, y_axis_label }) => {
     const lineChartData = {
         // labels represent x axis
@@ -46,6 +47,25 @@ const BarGraph = ({ x_axis, y_axis, x_axis_label, y_axis_label }) => {
             },
         ],
     };
+=======
+const BarGraph = ({ groupedData = [], x_axis_label = 'X', y_axis_label = 'Count', datasetLabel = 'Count' }) => {
+  // groupedData expected shape: [{ label: 'Some value', value: 123 }, ...]
+  const labels = Array.isArray(groupedData) ? groupedData.map(d => d.label) : [];
+  const dataValues = Array.isArray(groupedData) ? groupedData.map(d => d.value) : [];
+
+  const lineChartData = {
+    labels,
+    datasets: [
+      {
+        label: datasetLabel,
+        data: dataValues,
+        backgroundColor: 'rgba(125, 20, 190, 0.8)',
+        borderColor: 'rgba(56, 12, 83, 1)',
+        borderWidth: 1,
+      },
+    ],
+  };
+>>>>>>> backup-sierra
     
 const options = {
     scales: {
