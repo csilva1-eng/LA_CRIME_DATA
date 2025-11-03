@@ -49,13 +49,13 @@
     }
 
     void CrimeTree::grabJsonData() {
-        fs::path exePath = fs::current_path();
+        fs::path exePath = fs::current_path().parent_path().parent_path();
         for (int i = 0; i < 10; i++) {
             ostringstream oss;
-            oss << "../../crimeData_" << i << ".json";
+            oss << "crimeData_" << i << ".json";
             fs::path dataDirectory = exePath / oss.str();
-            //keep working from here
-            ifstream ifs(oss.str());
+
+            ifstream ifs(dataDirectory);
             if (!ifs.is_open()) {
                 cerr << "couldnt open " + oss.str() << endl;
                 return;
@@ -152,14 +152,17 @@
         //everything should still work so i hope that doesnt ruin stuff
 
         cout << root->dr_num << " " << root->val << endl;
+        // this->count++;
         inorderTraversal(root->right);
 
     }
 
     void CrimeTree::printAllSubtrees() {
         auto itr = roots.begin();
+
         while (itr != roots.end()) {
             inorderTraversal(itr->second);
+            // cout << this->count << endl;
             itr++;
         }
     }

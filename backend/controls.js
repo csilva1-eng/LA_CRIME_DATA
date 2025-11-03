@@ -13,6 +13,7 @@ const __dirname = path.dirname(__filename);
 
 export async function retrieveData(req, res){
     try{
+        const cppReqSet = new Set()
         //http://localhost:3001/api/test?xAxis=(wtv u want)
         const get20 = 20 // how many requests we make at a time
         let pageNumber = 1
@@ -58,6 +59,9 @@ export async function retrieveData(req, res){
                         }))
                         : [])
 
+                cppReqSet.add((req.query.xAxis).json())
+                console.log(cppReqSet)
+
                 /*
                 this will filter the data so that we only have certain values. that are requested
                  */
@@ -75,7 +79,7 @@ export async function retrieveData(req, res){
 
 
         console.log("saved dataset.json");
-        res.status(200).json({msg: "got the data!"})
+        res.status(200).json(cppReqSet)
     } catch(error){
         console.error("Couldnt get crime data", error)
         res.status(400).json({msg: "failed to retrieve data"})
@@ -96,7 +100,7 @@ export function runCpp(req, res){
             return res.status(500).send("C++ binary not found.");
         }
 
-        const args = [type, region];
+        const args = [...cppReqSet];
         // safety: set timeout and maxBuffer to avoid hangs / excessive memory
         const execOptions = {timeout: 10000, maxBuffer: 10 * 1024 * 1024};
         execFile(binPath, args, execOptions, (error, stdout, stderr) => {

@@ -12,7 +12,6 @@ int main(int argc, char* argv[]) {
     CrimeTree tree;
     tree.grabJsonData();
     tree.printAllSubtrees();
-    cout << "ughhhh";
 
     // ifstream input("crimeData.json");
     // if (!input) {
