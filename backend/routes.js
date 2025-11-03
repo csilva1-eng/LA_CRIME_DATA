@@ -8,7 +8,7 @@ const router = express.Router()
 
 router.get('/api/test', retrieveData)
 router.get('/test', retrieveDataTest)
-router.get('/test-run-cpp', runCpp)
+// router.get('/test-run-cpp', runCpp)
 // router.get('/retrieve-xaxis-data', retrieveXAxisData);
 
 

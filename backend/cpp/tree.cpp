@@ -140,7 +140,13 @@
     }
 
     void CrimeTree::dfsAlg() {
+        //basically inorder traversal right? i hope
+        auto itr = roots.begin();
+        while (itr != roots.end()) {
+            inorderTraversal(itr->second);
 
+            itr++;
+        }
     }
 
     void CrimeTree::inorderTraversal(Node* root) {

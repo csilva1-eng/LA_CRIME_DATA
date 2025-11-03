@@ -1,5 +1,5 @@
 /* eslint-env node */
-import { execFile, exec } from 'child_process'
+import { execFile, exec, spawn } from 'child_process'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
@@ -17,16 +17,19 @@ export async function retrieveData(req, res){
     try{
         //http://localhost:3001/api/test?xAxis=(wtv u want)
         // const xAxis = req.query.Xaxis || "AREA"; //default to area_name if not provided
+        let cppReqSet = new Set()
         const get20 = 20 // how many requests we make at a time
         let pageNumber = 1
-        for(let i = 0; i < 10; i++){
+        for(let i = 0; i < 1; i++){
             console.log(`trying page ${i}`)
             let chunk = []
-            for(let k = 1; k < 201; k+=get20){
+            for(let k = 1; k < 21; k+=get20){
+
 
                 let requests = [] // we will house all fetch requests in this array
 
-                for (let j = k; j < k + get20 && j < 201; j++) {
+                for (let j = k; j < k + get20 && j < 21; j++) {
+
                     requests.push(fetch(process.env.DATA_API +
                         "?pageNumber=" + pageNumber +
                         "&pageSize=50" +
@@ -35,8 +38,10 @@ export async function retrieveData(req, res){
                     pageNumber++;
                 }
 
+
                //DATA_API and SECRET_TOKEN are hidden in the .env file.
                 const response = await Promise.all(requests)
+
                 /*
                 we will do 20 requests at a time and await for the 20 to finish
                 This is faster than doing one requests at a time because instead of waiting one by one
@@ -52,10 +57,10 @@ export async function retrieveData(req, res){
                 //turn all the response into json so we can put them into file
 
 
-
                 const filter = jsonArr.flatMap((item) => {
                     if (Array.isArray(item)) {
                         return item.map((d) => {
+                            cppReqSet.add(d[req.query.xAxis])
                             return {
                                 [req.query.xAxis]: d[req.query.xAxis],
                                 dr_no: d.dr_no
@@ -88,6 +93,7 @@ export async function retrieveData(req, res){
 
         console.log("saved dataset.json");
         const result = retrieveXAxisData(req.query.xAxis)
+        runCpp(cppReqSet)
         res.status(200).json(result)
     } catch(error){
         console.error("Couldnt get crime data", error)
@@ -95,35 +101,50 @@ export async function retrieveData(req, res){
     }
 }
 
-export function runCpp(req, res){
-    try{
+export function runCpp(cppReqSet){
         const filesToCompile = "tree.cpp crime.cpp"
-        const exeName = process.platorm == "win32" ? "P2-DSA_LACrimeData.exe" : "P2-DSA-LACrimeData"
+        const exeName = process.platform == "win32" ? "P2-DSA_LACrimeData.exe" : "P2-DSA-LACrimeData"
 
 
-        const type = String(req.query.type || "DISPLAY").slice(0, 20); //Read type, default display if not
-        const region = String(req.query.region || "UNKNOWN").slice(0, 20); //Read region, default uknown all if not
+        // const type = String(req.query.type || "DISPLAY").slice(0, 20); //Read type, default display if not
+        // const region = String(req.query.region || "UNKNOWN").slice(0, 20); //Read region, default uknown all if not
         const binPath = path.join(__dirname, "cpp", "build", process.platform === 'win32' ? 'P2-DSA-LACrimeData.exe' : 'P2-DSA-LACrimeData'); //Executable path
         //Execute C++ binary with args
         if (!fs.existsSync(binPath)) {
-            return res.status(500).send("C++ binary not found.");
+            throw new Error("Cant find exe at ", binPath)
         }
 
         const args = [...cppReqSet];
-        // safety: set timeout and maxBuffer to avoid hangs / excessive memory
-        const execOptions = {timeout: 10000, maxBuffer: 10 * 1024 * 1024};
-        execFile(binPath, args, execOptions, (error, stdout, stderr) => {
-            if (error) {
-                console.error("Error executing C++ binary:", error, stderr);
-                if (error.killed) return res.status(504).send("C++ process timed out.");
-                return res.status(500).send("Error executing C++ binary.");
-            }
-            // Send stdout as response
-            return res.status(200).send(stdout || "No output from C++ program.");
+    const cppProc = spawn(binPath, args, {
+        cwd: path.join(__dirname, "cpp", "build")
+    });
+
+
+    cppProc.stdout.on("data", (data) =>{
+        process.stdout.write(data)
+    })
+
+        cppProc.stderr.on("data", (data) => {
+            console.error("C++ stderr:", data.toString());
         });
-    } catch(error){
-        console.error("Couldnt run the program :( ", error)
-    }
+
+        cppProc.on("close", (code) => {
+            console.log(`C++ process exited with code ${code}`);
+        });
+        // safety: set timeout and maxBuffer to avoid hangs / excessive memory
+    //     const execOptions = {timeout: 10000, maxBuffer: 10 * 1024 * 1024};
+    //     execFile(binPath, args, execOptions, (error, stdout, stderr) => {
+    //         if (error) {
+    //             console.error("Error executing C++ binary:", error, stderr);
+    //             if (error.killed) throw new Error("Error killed");
+    //             throw new Error("Error executing C++ binary.");
+    //         }
+    //         // Send stdout as response
+    //         console.log("C++ output: ", JSON.stringify(stdout));
+    //     });
+    // } catch(error){
+    //     console.error("Couldnt run the program :( ", error)
+    // }
 }
 
 
