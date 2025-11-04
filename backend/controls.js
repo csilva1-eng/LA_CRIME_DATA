@@ -1,4 +1,3 @@
-
 /* eslint-env node */
 import { execFile, exec, spawn } from 'child_process'
 import path from 'path'
