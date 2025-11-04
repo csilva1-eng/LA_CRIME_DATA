@@ -25,10 +25,13 @@ class CrimeTree {
     map<string, Node*> roots;
     int counter = 0; //just for testing to count how many nodes. uncomment whats in inorderTraversal and print all subtrees to see
     unordered_map<string, int> valsForFrontEnd;
+    int freqOfSend = 100;
 
 public:
 
     map<string, Node*> getRoots();
+
+    void changeFreqOfSend(int val); //let the user change this?
 
     void grabJsonData();
 

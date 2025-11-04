@@ -13,9 +13,8 @@ const __dirname = path.dirname(__filename);
 
 export async function retrieveData(req, res){
     try{
-        //http://localhost:3001/api/test?xAxis=(wtv u want)
+        //http://localhost:3001/api/test?xAxis=(wtv u want)&alg=(bfs/dfs)
         // const xAxis = req.query.Xaxis || "AREA"; //default to area_name if not provided
-        let cppReqSet = new Set()
         const get20 = 20 // how many requests we make at a time
         let pageNumber = 1
         for(let i = 0; i < 1; i++){
@@ -58,7 +57,6 @@ export async function retrieveData(req, res){
                 const filter = jsonArr.flatMap((item) => {
                     if (Array.isArray(item)) {
                         return item.map((d) => {
-                            cppReqSet.add(d[req.query.xAxis])
                             return {
                                 [req.query.xAxis]: d[req.query.xAxis],
                                 dr_no: d.dr_no
@@ -87,20 +85,19 @@ export async function retrieveData(req, res){
 
         console.log("saved dataset.json");
         const result = retrieveXAxisData(req.query.xAxis)
-        res.status(200).json({result, tree: await runCpp(cppReqSet)})
+        res.status(200).json({result, tree: await runCpp(req.query.alg)})
     } catch(error){
         console.error("Couldnt get crime data", error)
         res.status(400).json({msg: "failed to retrieve data"})
     }
 }
 
-export function runCpp(cppReqSet){
+export function runCpp(alg){
         let res = ''
         const filesToCompile = "tree.cpp crime.cpp"
         const exeName = process.platform == "win32" ? "P2-DSA_LACrimeData.exe" : "P2-DSA-LACrimeData"
         const exeLoc = path.join(__dirname, "cpp", "build", exeName)
         const fileLoc = path.join(__dirname, "cpp")
-        console.log(exeLoc)
         exec(`g++ -std=c++17 ${filesToCompile} -o ${exeLoc}`, {cwd: fileLoc}, (error, stdout, stderr) =>{
             if(error) {
                 console.log("failed to compile ", exeName, error.message)
@@ -114,8 +111,7 @@ export function runCpp(cppReqSet){
         if (!fs.existsSync(binPath)) {
             throw new Error("Cant find exe at ", binPath)
         }
-
-        const args = [...cppReqSet];
+        const args = [alg];
     return new Promise((resolve, reject) => {
         const cppProc = spawn(binPath, args, {
             cwd: path.join(__dirname, "cpp", "build")

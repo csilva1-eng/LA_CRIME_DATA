@@ -49,6 +49,9 @@ namespace fs = std::experimental::filesystem;
         left = nullptr;
     } 
 
+    void CrimeTree::changeFreqOfSend(int val) {
+        freqOfSend = val;
+    }
 
 
 
@@ -139,11 +142,15 @@ namespace fs = std::experimental::filesystem;
 
                 counter++;
                 valsForFrontEnd[node->val]++;
-                if (counter % 100 == 0) {
+                if (counter % freqOfSend == 0) {
 
                     auto itr = valsForFrontEnd.begin();
                     while (itr != valsForFrontEnd.end()) {
-                        cout << "|" << itr->second << " "<< itr->first << "| ";
+                        if (!(itr->first).empty() == 0) {
+                            cout << "|frequency: " << itr->second << " key: " << "Unknown" << "| ";
+                        } else {
+                            cout << "|frequency: " << itr->second << " key: " << itr->first << "| ";
+                        }
                         itr++;
                     }
                     cout << endl;
@@ -176,7 +183,11 @@ namespace fs = std::experimental::filesystem;
         }
         auto vFFEItr = valsForFrontEnd.begin();
         while (vFFEItr != valsForFrontEnd.end()) {
-            cout << "|" << vFFEItr->second << " " << vFFEItr->first << "| ";
+            if (!(vFFEItr->first).empty() == 0) {
+                cout << "|frequency: " << vFFEItr->second << " key: " << "Unknown" << "| ";
+            } else {
+                cout << "|frequency: " << vFFEItr->second << " key: " << vFFEItr->first << "| ";
+            }
             vFFEItr++;
         }
         cout << endl;
@@ -191,10 +202,14 @@ namespace fs = std::experimental::filesystem;
         //everything should still work so i hope that doesnt ruin stuff
         valsForFrontEnd[root->val]++;
         counter++;
-        if (counter % 100 == 0) {
+        if (counter % freqOfSend == 0) {
             auto itr = valsForFrontEnd.begin();
             while (itr != valsForFrontEnd.end()) {
-                cout << "|" << itr->second << " "<< itr->first << "| ";
+                if (!(itr->first).empty() == 0) {
+                    cout << "|frequency: " << itr->second << " key: " << "Unknown" << "| ";
+                } else {
+                    cout << "|frequency: " << itr->second << " key: " << itr->first << "| ";
+                }
                 itr++;
             }
             cout << endl;
