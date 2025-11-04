@@ -117,6 +117,14 @@ function App() {
 
 
 
+        <div className='map'>
+          {xAxisLoading && <div>Loading chart…</div>}
+          {xAxisError && <div style={{ color: 'red' }}>Error loading data: {xAxisError}</div>}
+          {!xAxisLoading && !xAxisError && (
+            <BarGraph groupedData={xAxisData} x_axis_label={xAxis} y_axis_label={"Count"} datasetLabel={`Counts by ${xAxis}`} />
+          )}
+        </div>
+
 
         <div className='controls'>
         <label> Longitude
