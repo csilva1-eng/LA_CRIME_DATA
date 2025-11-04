@@ -20,58 +20,58 @@ ChartJS.register(
 );
 
 const BarGraph = ({ groupedData = [], x_axis_label = 'X', y_axis_label = 'Count', datasetLabel = 'Count' }) => {
-  // groupedData expected shape: [{ label: 'Some value', value: 123 }, ...]
-  const labels = Array.isArray(groupedData) ? groupedData.map(d => d.label) : [];
-  const dataValues = Array.isArray(groupedData) ? groupedData.map(d => d.value) : [];
+    // groupedData expected shape: [{ label: 'Some value', value: 123 }, ...]
+    const labels = Array.isArray(groupedData) ? groupedData.map(d => d.label) : [];
+    const dataValues = Array.isArray(groupedData) ? groupedData.map(d => d.value) : [];
 
-  const lineChartData = {
-    labels,
-    datasets: [
-      {
-        label: datasetLabel,
-        data: dataValues,
-        backgroundColor: 'rgba(125, 20, 190, 0.8)',
-        borderColor: 'rgba(56, 12, 83, 1)',
-        borderWidth: 1,
-      },
-    ],
-  };
-    
-const options = {
-    scales: {
-      x: {
-        grid: {
-          color: 'black',
-        },
+    const lineChartData = {
+        labels,
+        datasets: [
+            {
+                label: datasetLabel,
+                data: dataValues,
+                backgroundColor: 'rgba(125, 20, 190, 0.8)',
+                borderColor: 'rgba(56, 12, 83, 1)',
+                borderWidth: 1,
+            },
+        ],
+    };
 
-        ticks: {
-            color: 'green'
-        },
-         
-        title: {
-            display: true,
-            text: x_axis_label,
-            color: 'purple', // Set title color
-        },
-      },
-      y: {
-        grid: {
-          color: 'black'
-        },
+    const options = {
+        scales: {
+            x: {
+                grid: {
+                    color: 'black',
+                },
 
-        ticks: {
-            color: 'green'
-        },
+                ticks: {
+                    color: 'green'
+                },
 
-        title: {
-            display: true,
-            text: y_axis_label,
-            color: 'purple', // Set title color
-        },
+                title: {
+                    display: true,
+                    text: x_axis_label,
+                    color: 'purple', // Set title color
+                },
+            },
+            y: {
+                grid: {
+                    color: 'black'
+                },
 
-      }
-    }
-};
+                ticks: {
+                    color: 'green'
+                },
+
+                title: {
+                    display: true,
+                    text: y_axis_label,
+                    color: 'purple', // Set title color
+                },
+
+            }
+        }
+    };
 
     return  (
         <div style={{ maxWidth: '800px', width: '100%' }}>
