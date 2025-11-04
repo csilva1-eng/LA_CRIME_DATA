@@ -4,7 +4,6 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
 import dotenv from 'dotenv'
-import { all } from 'axios'
 import { group } from 'console'
 
 dotenv.config()
