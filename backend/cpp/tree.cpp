@@ -118,6 +118,7 @@ namespace fs = std::experimental::filesystem;
 
     //now implement bfs and dfs
     void CrimeTree::bfsAlg() {
+        counter =0;
         valsForFrontEnd.clear();
         queue<Node*> q;
         auto itr = roots.begin();
@@ -125,7 +126,7 @@ namespace fs = std::experimental::filesystem;
             q.push(itr->second);
             itr++;
         }
-
+        int counter = 0;
         if (q.front() == nullptr) q.pop();
         while (!q.empty()) {
             int len = q.size();
@@ -135,8 +136,22 @@ namespace fs = std::experimental::filesystem;
                 Node *node = q.front();
                 q.pop();
 
-                valsForFrontEnd[q.front()->val]++;
-                cout << valsForFrontEnd[q.front()->val] <<" " << q.front()->val<< endl;
+
+                counter++;
+                valsForFrontEnd[node->val]++;
+                if (counter % 100 == 0) {
+
+                    auto itr = valsForFrontEnd.begin();
+                    while (itr != valsForFrontEnd.end()) {
+                        cout << "|" << itr->second << " "<< itr->first << "| ";
+                        itr++;
+                    }
+                    cout << endl;
+                }
+
+                // cout << valsForFrontEnd[node->val] <<" " << node->val<< endl;
+
+
 
                 if (node->left != nullptr)
                     q.push(node->left);
@@ -151,6 +166,7 @@ namespace fs = std::experimental::filesystem;
 
     void CrimeTree::dfsAlg() {
         //basically inorder traversal right? i hope
+        counter = 0;
         valsForFrontEnd.clear();
         auto itr = roots.begin();
         while (itr != roots.end()) {
@@ -158,6 +174,12 @@ namespace fs = std::experimental::filesystem;
 
             itr++;
         }
+        auto vFFEItr = valsForFrontEnd.begin();
+        while (vFFEItr != valsForFrontEnd.end()) {
+            cout << "|" << vFFEItr->second << " " << vFFEItr->first << "| ";
+            vFFEItr++;
+        }
+        cout << endl;
     }
 
     void CrimeTree::inorderTraversal(Node* root) {
@@ -167,8 +189,17 @@ namespace fs = std::experimental::filesystem;
         inorderTraversal(root->left);
         //there is one dr_no that is particularly small. its 0817.
         //everything should still work so i hope that doesnt ruin stuff
-
-        cout << valsForFrontEnd[root->val]++ << " " << root->val << endl;
+        valsForFrontEnd[root->val]++;
+        counter++;
+        if (counter % 100 == 0) {
+            auto itr = valsForFrontEnd.begin();
+            while (itr != valsForFrontEnd.end()) {
+                cout << "|" << itr->second << " "<< itr->first << "| ";
+                itr++;
+            }
+            cout << endl;
+        }
+        // cout << valsForFrontEnd[root->val]++ << " " << root->val << endl;
 
         // this->count++;
         inorderTraversal(root->right);

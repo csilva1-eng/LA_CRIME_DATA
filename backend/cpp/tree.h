@@ -23,7 +23,7 @@ struct Node {
 
 class CrimeTree {
     map<string, Node*> roots;
-    int count = 0; //just for testing to count how many nodes. uncomment whats in inorderTraversal and print all subtrees to see
+    int counter = 0; //just for testing to count how many nodes. uncomment whats in inorderTraversal and print all subtrees to see
     unordered_map<string, int> valsForFrontEnd;
 
 public:
