@@ -20,13 +20,15 @@ ChartJS.register(
 );
 
 const BarGraph = ({ groupedData = [], x_axis_label = 'X', y_axis_label = 'Count', datasetLabel = 'Count' }) => {
-    // groupedData expected shape: [{ label: 'Some value', value: 123 }, ...]
     const labels = groupedData["xAxisVals"];
 
     let dataValues;
     let lineChartData;
+    // let values = groupedData["tree"]
+    // let changeThisName = values.split('\n')) //now there all in there own little groups within changeThisName liek arrs
     // for(let i = 0; i < groupedData["tree"].length; i++) {
-    //     dataValues
+
+        // dataValues = [1] this isnt right i was just rtying stuff
         lineChartData = {
             labels,
             datasets: [
