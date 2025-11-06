@@ -27,6 +27,7 @@ function App() {
 
   // List of search types for buttons
   //const searchTypes = ["DFS", "BFS", "DISPLAY"];
+
   const [searchType, setSearchType] = useState(""); // using useState instead or array bc its easier to keep track when clicked (i.e onClick event)
 
   const search = (type) => {
@@ -98,7 +99,8 @@ function App() {
         return;
       }
       const response = await axios.get(`http://localhost:3001/api/test?xAxis=${xAxis}&alg=${searchType}`)
-      setXAxisData(response.data)
+  // backend returns { grouped: [...], tree: '...' }
+  setXAxisData(response.data.grouped || [])
 
     } catch(error){
       console.log(error)
@@ -140,14 +142,26 @@ function App() {
         <div className='search-buttons'>
           <button onClick={() => setSearchType("dfs")}>DFS Search</button>
           <button onClick={() => setSearchType("bfs")}>BFS Search</button>
+          <button onClick={() => setSearchType("dfs")}>DFS Search</button>
+          <button onClick={() => setSearchType("bfs")}>BFS Search</button>
         </div>
 
         <div>
+          <button onClick={() => handleDisplay()}>Display!</button>
           <button onClick={() => handleDisplay()}>Display!</button>
         </div>
         <div className='x-axis-select'>
           <label> Select X-Axis:
             <select value={xAxis} onChange={(e) => { setXAxis(e.target.value); }}>
+              <option value="area_name">Area Name</option>
+              <option value="area">Area</option>
+              <option value="crm_cd_desc">Crime Committed</option>
+              <option value="vict_sex">Victim Sex</option>
+              <option value="vict_age">Victim Age</option>
+              <option value="premis_desc">Premise Description</option>
+              <option value="weapon_desc">Weapon Used</option>
+              <option value="status_desc">Case Status</option>
+            {/*  is it possible to add location?*/}
               <option value="area_name">Area Name</option>
               <option value="area">Area</option>
               <option value="crm_cd_desc">Crime Committed</option>

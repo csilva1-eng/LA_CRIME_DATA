@@ -1,89 +1,79 @@
+import React, { useMemo } from 'react'
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-} from 'chart.js';
-import { Bar } from 'react-chartjs-2';
+    Chart as ChartJS,
+    CategoryScale,
+    import React, { useEffect, useMemo } from 'react'
+    import {
+        Chart as ChartJS,
+        CategoryScale,
+        LinearScale,
+        BarElement,
+        Title,
+        Tooltip,
+        Legend,
+    } from 'chart.js'
+    import { Bar } from 'react-chartjs-2'
 
-// register imported items with ChartJS library
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-);
+    ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
-const BarGraph = ({ groupedData = [], x_axis_label = 'X', y_axis_label = 'Count', datasetLabel = 'Count' }) => {
-    const labels = groupedData["xAxisVals"];
+    const BarGraph = ({ groupedData = [], x_axis_label = 'X', y_axis_label = 'Count', datasetLabel = 'Count' }) => {
+        // groupedData expected shape: [{ label, value }, ...]
+        const labels = groupedData.map((g) => g.label)
+        const dataValues = groupedData.map((g) => g.value)
 
-    let dataValues;
-    let lineChartData;
-    // let values = groupedData["tree"]
-    // let changeThisName = values.split('\n')) //now there all in there own little groups within changeThisName liek arrs
-    // for(let i = 0; i < groupedData["tree"].length; i++) {
+        useEffect(() => {
+            // helpful debug while developing — remove when stable
+            console.log('BarGraph received groupedData length=', groupedData.length)
+            if (groupedData.length > 0) console.log('BarGraph sample labels:', labels.slice(0, 8))
+        }, [groupedData])
 
-        // dataValues = [1] this isnt right i was just rtying stuff
-        lineChartData = {
-            labels,
-            datasets: [
-                {
-                    label: datasetLabel,
-                    data: dataValues,
-                    backgroundColor: 'rgba(125, 20, 190, 0.8)',
-                    borderColor: 'rgba(56, 12, 83, 1)',
-                    borderWidth: 1,
+        const data = useMemo(
+            () => ({
+                labels,
+                datasets: [
+                    {
+                        label: datasetLabel,
+                        data: dataValues,
+                        backgroundColor: 'rgba(75, 123, 255, 0.85)',
+                        borderColor: 'rgba(32, 64, 128, 1)',
+                        borderWidth: 1,
+                    },
+                ],
+            }),
+            [labels.join('|'), dataValues.join(',')]
+        )
+
+        const options = useMemo(
+            () => ({
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 800, easing: 'easeOutQuart' },
+                plugins: {
+                    legend: { display: true, position: 'top' },
+                    title: { display: false },
                 },
-            ],
-        };
-    // }
-
-    const options = {
-        scales: {
-            x: {
-                grid: {
-                    color: 'black',
+                scales: {
+                    x: {
+                        grid: { color: '#ddd' },
+                        ticks: { color: '#333' },
+                        title: { display: true, text: x_axis_label, color: '#222' },
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#eee' },
+                        ticks: { color: '#333' },
+                        title: { display: true, text: y_axis_label, color: '#222' },
+                    },
                 },
+            }),
+            [x_axis_label, y_axis_label]
+        )
 
-                ticks: {
-                    color: 'green'
-                },
+        return (
+            <div style={{ width: '100%', maxWidth: 1000, height: 420 }}>
+                <Bar options={options} data={data} />
+            </div>
+        )
+    }
 
-                title: {
-                    display: true,
-                    text: x_axis_label,
-                    color: 'purple', // Set title color
-                },
-            },
-            y: {
-                grid: {
-                    color: 'black'
-                },
-
-                ticks: {
-                    color: 'green'
-                },
-
-                title: {
-                    display: true,
-                    text: y_axis_label,
-                    color: 'purple', // Set title color
-                },
-
-            }
-        }
-    };
-
-    return  (
-        <div style={{ maxWidth: '990px', width: '100%' }}>
-            <Bar options={options} data={lineChartData}></Bar>
-        </div>
-    )
-}
-
-export default BarGraph;
+    export default BarGraph

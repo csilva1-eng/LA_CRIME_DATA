@@ -17,7 +17,7 @@ export async function retrieveData(req, res){
         // const xAxis = req.query.Xaxis || "AREA"; //default to area_name if not provided
         const get20 = 20 // how many requests we make at a time
         let pageNumber = 1
-        for(let i = 0; i < 1; i++){
+        for(let i = 0; i < 10; i++){
             console.log(`trying page ${i}`)
             let chunk = []
             for(let k = 1; k < 21; k+=get20){
@@ -222,6 +222,7 @@ export function retrieveXAxisData(xAxisReq){
         });
 
         const maxYVal = Math.max(...Object.values(grouped))
+        const yVals = Object.values(grouped);
         const lisXVals = [[...Object.keys(grouped)], [maxYVal]]
 
         console.log("grouped data ready");
