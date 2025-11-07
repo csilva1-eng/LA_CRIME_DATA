@@ -72,31 +72,43 @@ const BarGraph = ({
         },
     }), [datasetLabel]);
 
+    useEffect(() => { //debugging whats wrong with search order
+        console.log("Search order received:", searchOrder);
+        console.log("xAxisVals:", xAxisVals);
+        console.log("yAxisVals:", yAxisVals);
+    }, [searchOrder]);
+    //Update chart data when groupedData changes
     useEffect(() => {
-        setChartData(prevData => ({
+        setChartData(prevData => {
+            //inifite loop fix hopefully
+            if (JSON.stringify(prevData.labels) === JSON.stringify(xAxisVals)) { return prevData; } // No change needed
+            return { //reset data for animation
             ...prevData,
             labels: xAxisVals,
             datasets: prevData.datasets.map(ds => ({
                 ...ds,
                 data: xAxisVals.map(() => 0), //reset to 0 for animation
             })),
-        }));
+        };
+    });
     }, [xAxisVals]);
+    //animate based on searchOrder
     useEffect(() => {
-        if (searchOrder.length === 0) return;
-        let i = 0;
-        const interval = setInterval(() => {
+        if (searchOrder.length === 0) return; //No animation if no search order
+        let i = 0; //Current position
+        const interval = setInterval(() => { 
             if (i >= searchOrder.length) {
-                clearInterval(interval);
+                clearInterval(interval); //stop when finished
                 return;
             }
             setChartData((prevData) => {
+                //i think this was an issue because it wasnt updating state correctly
                 const newDatasets = prevData.datasets.map(ds => ({...ds, data: [...ds.data]})); //copy
-                const idx = searchOrder[i];
-                newDatasets[0].data[idx] = yAxisVals[idx];
+                const idx = searchOrder[i]; //get new index to update
+                newDatasets[0].data[idx] = yAxisVals[idx]; //set actual value at that index
                 return {...prevData, datasets: newDatasets};
             });
-            i++;
+            i++; //move next
         }, stepInterval);
         return () => clearInterval(interval);
     }, [searchOrder, xAxisVals, yAxisVals, stepInterval]);
