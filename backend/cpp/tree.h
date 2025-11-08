@@ -25,7 +25,7 @@ class CrimeTree {
     map<string, Node*> roots;
     int counter = 0; //just for testing to count how many nodes. uncomment whats in inorderTraversal and print all subtrees to see
     unordered_map<string, int> valsForFrontEnd;
-    int freqOfSend = 100;
+    int freqOfSend = 1000;
 
 public:
 
