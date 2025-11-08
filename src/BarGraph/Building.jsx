@@ -1,9 +1,10 @@
 import React, {useEffect, useState} from 'react' //For bar graph
 import BarGraph from './BarGraph';
+import { build } from 'vite';
 
 function Building({ xAxis }) {
     const [groupedData, setGroupedData] = useState({ xAxisVals: [], yAxisVals: [] }); //x and y axis data
-    
+    const [searchType, setSearchType] = useState(''); //Search type: bfs or dfs
     const [datasetLabel, setDatasetLabel] = useState('Results'); //Label for dataset
     const [treeSnapshots, setTreeSnapshots] = useState([]); //Snapshots of tree traversal for animation
     const stepInterval = 500;
@@ -11,16 +12,16 @@ function Building({ xAxis }) {
     async function buildGraph(alg) { //alg is 'bfs' or 'dfs'
         setDatasetLabel(alg);
         try {
-            const response = await fetch(`http://localhost:3001/api/test?alg=${alg}`);
+            const response = await fetch(`http://localhost:3001/api/test?xAxis=${xAxis}&alg=${alg}`);
             const data = await response.json();
 
             //fetch grouped data
-            setGroupedData({ xAxisVals: xVals, yAxisVals: Array(xVals.length).fill(0) }); //reset before building
-            const xVals = data.xAxisVals;
+            const xVals = data.result; //instead of .xVals bc result is from controls.js
+            setGroupedData({ xAxisVals: xVals, yAxisVals: Array(xVals.length).fill(0) }); //reset before building (in case u already built once)
 
             //parse traversal order
             // const traversalOrder = [];
-            const treeSnapshots = data.tree
+            const snapshots = data.tree
             .split('\r\n')
             .filter(line => line.trim() !== '')//There MIGHT be empty lines idk
             .map(snap => {
@@ -55,18 +56,21 @@ function Building({ xAxis }) {
             // });
             // console.log("Traversal order parsed:", traversalOrder); //i forgot what this even prints
 
-            setTreeSnapshots(snap);
+            setTreeSnapshots(snapshots);
         }
         catch (error) {
             console.error('Error fetching graph data:', error);
         }
     }
 
+    useEffect(() => { //UseEffect is like a side effect thing? So when searchType changes we update buildGraph
+        buildGraph(searchType);
+    }, [searchType]);
     return (
         <div style = {{textAlign: 'center', padding: '20px'}}>
             <div style = {{ marginBottom: '10px' }}>
-                <button onClick={() => buildGraph('bfs')}>Run BFS</button>
-                <button onClick={() => buildGraph('dfs')}>Run DFS</button>
+                <button onClick={() => setSearchType('bfs')}>Run BFS</button>
+                <button onClick={() => setSearchType('dfs')}>Run DFS</button>
             </div>
             <BarGraph groupedData={groupedData} x_axis_label={xAxis} y_axis_label={"Count"} datasetLabel={datasetLabel} treeSnapshots={treeSnapshots} />
         </div>         

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import './App.css'
 import BarGraph from './BarGraph/BarGraph';
+import Building from './BarGraph/Building';
 //import "@fontsource/ibm-plex-sans";
 
 
@@ -120,7 +121,7 @@ function App() {
       </nav>
 
       <div className='main'>
-
+        {/* <Building xAxis={xAxis} /> */}
         <button onClick={() => handleFetch()}>call node api</button>
         <p>message: {message}</p>
 
@@ -142,6 +143,8 @@ function App() {
         <div className='search-buttons'>
           <button onClick={() => setSearchType("dfs")}>DFS Search</button>
           <button onClick={() => setSearchType("bfs")}>BFS Search</button>
+          {/* <button onClick={() => buildGraph("dfs")}>DFS Search</button>
+          <button onClick={() => buildGraph("bfs")}>BFS Search</button> */}
         </div>
 
         <div>
