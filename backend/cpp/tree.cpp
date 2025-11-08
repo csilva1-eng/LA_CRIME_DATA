@@ -139,7 +139,6 @@ namespace fs = std::experimental::filesystem;
                 Node *node = q.front();
                 q.pop();
 
-
                 counter++;
                 valsForFrontEnd[node->val]++;
                 if (counter % freqOfSend == 0) {
