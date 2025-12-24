@@ -68,6 +68,9 @@ label {
   margin-top: 20px;
 }
 
+
+.leaflet-container {   width: 100%;   height: 100vh; }
+
 span{
   text-shadow:
           -1px -1px 0 black,

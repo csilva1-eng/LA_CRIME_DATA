@@ -41,6 +41,10 @@ namespace fs = std::experimental::filesystem;
  */
 
 
+
+/*
+ *define what our nodes
+ */
     Node::Node(string& dr_num, string& val) {
         this->dr_num = dr_num;
         this->val = val;

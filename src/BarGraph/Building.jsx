@@ -42,18 +42,7 @@ function Building({ xAxis }) {
                     return counts;
                     });
             
-            // treeLines.forEach(line => {
-            //     const treeLine = line.trim(); //no extra spaces
-            //     if (treeLine.startsWith('key: ')){ //only process key lines
-            //         const key = treeLine.slice(5).trim(); //get rid of 'key: '
-            //         const index = xVals.indexOf(key); //find index of this key in x axis label
-            //         if (index !== -1) { //valid index
-            //             traversalOrder.push(index); //add to traversal order
-            //         }
-                    
-            //     }
-            // });
-            // console.log("Traversal order parsed:", traversalOrder); //i forgot what this even prints
+
 
             setTreeSnapshots(snapshots);
         }

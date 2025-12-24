@@ -4,6 +4,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
 import dotenv from 'dotenv'
+import {json} from "express";
 
 dotenv.config()
 
@@ -13,27 +14,46 @@ const __dirname = path.dirname(__filename);
 
 export async function retrieveData(req, res){
     try{
-        //http://localhost:3001/api/test?xAxis=(wtv u want)&alg=(bfs/dfs)
-        // const xAxis = req.query.Xaxis || "AREA"; //default to area_name if not provided
+        //http://localhost:3001/api/test?xAxis=(wtv u want)&alg=(bfs/dfs)&yearStart=()&yearEnd=()
+        if(req.query.yearStart > req.query.yearEnd){
+            throw new Error("Year end can't be greater than year start")
+        }
+
         const getXAmt = 200 // how many requests we make at a time
         let pageNumber = 1
-        for(let i = 0; i < 10; i++){
+        // for(let i = 0; i < 10; i++){
             console.log(`trying page ${i}`)
             let chunk = []
-            for(let k = 1; k < 201; k+=getXAmt){
+            // for(let k = 1; k < 201; k+=getXAmt){
 
 
                 let requests = [] // we will house all fetch requests in this array
+                //
+                // for (let j = k; j < k + getXAmt && j < 201; j++) {
+                //
+                //     requests.push(fetch(process.env.DATA_API +
+                //         "?pageNumber=" + pageNumber +
+                //         "&pageSize=50" +
+                //         "&orderingSpecifier=discard" +
+                //         "&app_token=" + process.env.SECRET_TOKEN))
+                //     pageNumber++;
+                // }
 
-                for (let j = k; j < k + getXAmt && j < 201; j++) {
-
-                    requests.push(fetch(process.env.DATA_API +
-                        "?pageNumber=" + pageNumber +
-                        "&pageSize=50" +
-                        "&orderingSpecifier=discard" +
-                        "&app_token=" + process.env.SECRET_TOKEN))
-                    pageNumber++;
-                }
+                requests.push(fetch(process.env.DATA_API, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-App-Token": process.env.SECRET_TOKEN
+                    },
+                    body: JSON.stringify({
+                        query: `
+          SELECT date_extract_y(date_rptd) as year, crm_cd, ${req.query.xAxis}, dr_no, lat, lon 
+          COUNT(*) AS count
+          WHERE date_extract_y(date_rptd) between ${req.query.yearStart} and ${req.query.yearEnd}
+          LIMIT 1000000
+        `
+                    })
+                }));
 
 
                //DATA_API and SECRET_TOKEN are hidden in the .env file.
@@ -59,7 +79,9 @@ export async function retrieveData(req, res){
                         return item.map((d) => {
                             return {
                                 [req.query.xAxis]: d[req.query.xAxis],
-                                dr_no: d.dr_no
+                                dr_no: d.dr_no,
+                                lat: d.lat,
+                                lon: d.lon
                             };
                         });
                     } else {
@@ -78,10 +100,10 @@ export async function retrieveData(req, res){
                 this chunk we just aquired after all that will now be inputted into the file so we
                 dont write a bajillion lines at once
                  */
-                }
+                // }
             fs.writeFileSync(`crimeData_${i}.json`, JSON.stringify(chunk))
             console.log("input crimeData: ", i)
-        }
+        // }
 
         console.log("saved dataset.json");
         const result = retrieveXAxisData(req.query.xAxis)
@@ -91,6 +113,124 @@ export async function retrieveData(req, res){
         res.status(400).json({msg: "failed to retrieve data"})
     }
 }
+
+
+export async function retrieveDataGraph(req, res){
+    try{
+        //http://localhost:3001/api/test?xAxis=(wtv u want)&&yearStart=()&yearEnd=()
+        if(req.query.yearStart > req.query.yearEnd){
+            throw new Error("Year end can't be greater than year start")
+        }
+
+
+        let requests = []
+
+        requests.push(fetch(process.env.DATA_API, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-App-Token": process.env.SECRET_TOKEN
+            },
+            body: JSON.stringify({
+                query: `
+          SELECT ${req.query.xAxis},
+          COUNT(*) AS count
+          WHERE date_extract_y(date_rptd) between ${req.query.yearStart} and ${req.query.yearEnd}
+          GROUP BY ${req.query.xAxis}
+          ORDER BY ${req.query.xAxis}
+        `
+            })
+        }));
+
+
+        //DATA_API and SECRET_TOKEN are hidden in the .env file.
+        const response = await Promise.all(requests)
+
+        const jsonArr = await Promise.all(response.map(r => r.json()))
+
+        const aggregatedGraph = {}
+
+        for(const item of jsonArr){
+            if(!Array.isArray(item)) continue
+
+            for(const d of item){
+                const key = d[req.query.xAxis]
+                if(key == null) continue
+
+                aggregatedGraph[key] = (aggregatedGraph[key] || 0) + d.count
+            }
+        }
+
+
+
+        const rg = Object.entries(aggregatedGraph).map(([key, count]) => ({
+            xAxisVals: isNaN(key) ? key : Number(key),
+            count
+        }))
+
+
+        let highest = 0;
+
+        const resultGraph = rg.reduce((acc, {xAxisVals, count}) =>{
+            acc.xAxisVals.push(xAxisVals)
+            acc.counts.push(Number(count))
+            highest = Math.max(Number(count), highest)
+            return acc
+        },
+            {xAxisVals: [], counts: []}
+        )
+        console.log(resultGraph)
+        res.status(200).json({resultGraph, maxYval: highest})
+
+    } catch(error){
+        console.error("Couldnt get crime data", error)
+        res.status(400).json({msg: "failed to retrieve data"})
+    }
+}
+
+export async function retrieveDataMap(req,res) {
+    try {
+        if(req.query.yearStart > req.query.yearEnd){
+            throw new Error("Year end can't be greater than year start")
+        }
+
+        let requests = fetch(process.env.DATA_API, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-App-Token": process.env.SECRET_TOKEN
+            },
+            body: JSON.stringify({
+                query: `
+          SELECT lat, lon
+          WHERE lat IS NOT NULL AND lon IS NOT NULL AND date_extract_y(date_rptd) BETWEEN ${req.query.yearStart} AND ${req.query.yearEnd}
+        `
+            })
+        });
+
+        let response = await requests
+
+
+        let jsRes = await response.json()
+
+        let hold = []
+
+        for(const item of jsRes){
+            hold.push({
+                lat: Number(item.lat),
+                lon: Number(item.lon)
+            })
+        }
+
+        res.status(200).json(hold)
+
+    } catch (error) {
+        console.error("Couldnt get geographical data", error)
+        res.status(400).json({msg: "failed to retrieve geographical data"})
+
+    }
+}
+
 
 export function runCpp(alg){
         let res = ''
@@ -152,11 +292,11 @@ export async function retrieveDataTest(req, res){
         // for(let i = 0; i < 1; i++){
             console.log(`trying page 0`)
             let chunk = []
-            // for(let k = 1; k < 21; k+=get20){
+            for(let k = 1; k < 21; k+=get20){
 
                 let requests = []
 
-                // for (let j = k; j < k + get20 && j < 201; j++) {
+                // for (let j = k; j < k + get20 && j < 101; j++) {
                 //     requests.push(fetch(process.env.DATA_API +
                 //         // "?pageNumber=" + pageNumber +
                 //         // "&pageSize=20" +
@@ -170,7 +310,7 @@ export async function retrieveDataTest(req, res){
                     // pageNumber++;
                 // }
 
-        requests = await fetch(process.env.DATA_API, {
+        requests.push(fetch(process.env.DATA_API, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -178,37 +318,38 @@ export async function retrieveDataTest(req, res){
             },
             body: JSON.stringify({
                 query: `
-          SELECT date_extract_y(date_rptd) as year
-          WHERE date_extract_y(date_rptd) = 2021
-          GROUP BY year
-          LIMIT 2
+          SELECT date_extract_y(date_rptd) as year, crm_cd, ${req.query.xAxis}, dr_no, lat, lon 
+          WHERE date_extract_y(date_rptd) between ${req.query.yearStart} and ${req.query.yearEnd}
+          LIMIT 100000
         `
             })
-        });
+        }));
+                // }
 
-                const response = (requests)
-                console.log(response)
+                const response = await Promise.all(requests)
 
 
-                const jsonArr = await (response.json())
-        console.log(jsonArr)
-
+                const jsonArr = await Promise.all(response.map(r => r.json()))
 
 
 
-                // const filter = jsonArr.flatMap(item =>
-                //     Array.isArray(item) ?
-                //         item.map(d => ({
-                //             [req.query.xAxis]: d[req.query.xAxis],
-                //             dr_no: d.dr_no
-                //         }))
-                //         : [])
+
+
+                const filter = jsonArr.flatMap(item =>
+                    Array.isArray(item) ?
+                        item.map(d => ({
+                            [req.query.xAxis]: d[req.query.xAxis],
+                            dr_no: d.dr_no,
+                            lat: d.lat,
+                            lon: d.lon
+                        }))
+                        : [])
 
 
 
-                chunk.push(jsonArr)
+                chunk.push(filter)
 
-            // }
+            }
             fs.writeFileSync(`crimeData_0.json`, JSON.stringify(chunk))
             console.log("input crimeData: ", 0)
         // }
