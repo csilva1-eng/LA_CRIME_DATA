@@ -179,7 +179,6 @@ export async function retrieveDataGraph(req, res){
         },
             {xAxisVals: [], counts: []}
         )
-        console.log(resultGraph)
         res.status(200).json({resultGraph, maxYval: highest})
 
     } catch(error){
@@ -221,8 +220,7 @@ export async function retrieveDataMap(req,res) {
                 lon: Number(item.lon)
             })
         }
-
-        res.status(200).json(hold)
+        res.status(200).json({result: hold})
 
     } catch (error) {
         console.error("Couldnt get geographical data", error)

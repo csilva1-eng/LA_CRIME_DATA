@@ -14,6 +14,7 @@ function App() {
   const [xAxisData, setXAxisData] = useState([]);
   const [yearStart, setYearStart] = useState('2020')
   const [yearEnd, setYearEnd] = useState('2025')
+  const [geoData, setGeoData] = useState([])
 
   // List of search types for buttons
 
@@ -35,6 +36,9 @@ function App() {
       console.log(error)
     }
   }
+
+
+
 
 
   return (
@@ -122,14 +126,13 @@ function App() {
             {/*  <h3>Grouped Data Preview:</h3>*/}
             {/*  <pre>{JSON.stringify(xAxisData, null, 2)}</pre>*/}
             {/*</div>*/}
-      <button id = "searchButton" onClick = {() =>{
-        if(xAxisData.length == 0) gatherData()
-      }}>
-      <Link to = '/map' state = {xAxisData}>Map</Link>
+      <button id = "searchButton" >
+        <Link to = '/map'>Map</Link>
       </button>
 
 
       <script src="https://cdn.jsdelivr.net/npm/soda-js@0.2/lib/soda-js.bundle.min.js"></script>
+      <script src="leaflet-heat.js"></script>
     </div>
 
   )
