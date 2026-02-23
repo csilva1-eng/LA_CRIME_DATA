@@ -23,12 +23,12 @@ const BarGraph = ({
     groupedData = [],
     datasetLabel = 'Count',
 }) => {
-    const xAxisVals = groupedData?.result?.xAxisVals || [];
+    const xAxisVals = groupedData?.resultGraph?.xAxisVals || [];
     const [dataSet, setDataSet] = useState([])
 
     useEffect(() => {
 
-        setDataSet([...(groupedData?.result?.counts ?? [])])
+        setDataSet([...(groupedData?.resultGraph?.counts ?? [])])
     }, [groupedData]);
 
 
@@ -51,7 +51,7 @@ const BarGraph = ({
             x: { type: 'category' },
             y: {
                 beginAtZero: true,
-                max: groupedData.maxYVal,
+                max: groupedData.maxYval,
                 title: {
                     display: true,
                     text: "Number of Crimes Committed"
@@ -67,7 +67,7 @@ const BarGraph = ({
                 duration: 800,
                 easing: 'linear',
         },
-    }), [datasetLabel, groupedData.maxYVal]);
+    }, [datasetLabel, groupedData.maxYval]));
 
 
     useEffect(() => {
